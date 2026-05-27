@@ -1,0 +1,747 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: drivers
+    description: Driver management
+  - name: orders
+    description: Order management
+  - name: agents
+    description: Agent management
+  - name: admin
+    description: Admin dashboard
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /drivers/register:
+    post:
+      operationId: registerDriver
+      tags: [drivers]
+      summary: Register a new driver
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverInput"
+      responses:
+        "201":
+          description: Driver registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverProfile"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers:
+    get:
+      operationId: listDrivers
+      tags: [drivers]
+      summary: List all drivers (admin)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DriverProfile"
+
+  /drivers/{id}:
+    get:
+      operationId: getDriver
+      tags: [drivers]
+      summary: Get driver profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteDriver
+      tags: [drivers]
+      summary: Delete a driver (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/status:
+    patch:
+      operationId: updateDriverStatus
+      tags: [drivers]
+      summary: Approve or reject a driver (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverStatusUpdate"
+      responses:
+        "200":
+          description: Updated driver
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/balance:
+    get:
+      operationId: getDriverBalance
+      tags: [drivers]
+      summary: Get driver commission balance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Balance info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverBalance"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderRecord"
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderRecord"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderRecord"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{id}/offers:
+    post:
+      operationId: submitOffer
+      tags: [orders]
+      summary: Driver submits an offer on an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferInput"
+      responses:
+        "201":
+          description: Offer submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferRecord"
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: listOrderOffers
+      tags: [orders]
+      summary: Get cheapest 3 offers for an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Offers list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfferRecord"
+
+  /orders/{id}/select-offer:
+    post:
+      operationId: selectOrderOffer
+      tags: [orders]
+      summary: Customer selects an offer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelectOfferInput"
+      responses:
+        "200":
+          description: Order updated with selected driver
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderRecord"
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{id}/status:
+    patch:
+      operationId: updateOrderStatus
+      tags: [orders]
+      summary: Update order delivery stage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderRecord"
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /agents:
+    get:
+      operationId: listAgents
+      tags: [agents]
+      summary: List all agents (active and inactive)
+      responses:
+        "200":
+          description: Agents list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentRecord"
+    post:
+      operationId: createAgent
+      tags: [agents]
+      summary: Create a new agent (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentInput"
+      responses:
+        "201":
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentRecord"
+
+  /agents/{id}:
+    delete:
+      operationId: deleteAgent
+      tags: [agents]
+      summary: Delete an agent (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/area-stats:
+    get:
+      operationId: getAdminAreaStats
+      tags: [admin]
+      summary: Get most active areas with vehicle breakdown
+      responses:
+        "200":
+          description: Area statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AreaStat"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    DriverInput:
+      type: object
+      required: [fullName, phone, idNumber, vehicleType]
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        idNumber:
+          type: string
+        vehicleType:
+          type: string
+        vehicleImageUrl:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+
+    DriverStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    DriverProfile:
+      type: object
+      required: [id, fullName, phone, idNumber, vehicleType, status, commissionBalance, totalDeliveries, createdAt]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        phone:
+          type: string
+        idNumber:
+          type: string
+        vehicleType:
+          type: string
+        vehicleImageUrl:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        status:
+          type: string
+        commissionBalance:
+          type: integer
+        totalDeliveries:
+          type: integer
+        rating:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    DriverBalance:
+      type: object
+      required: [driverId, commissionBalance]
+      properties:
+        driverId:
+          type: integer
+        commissionBalance:
+          type: integer
+
+    OrderInput:
+      type: object
+      required: [customerId, pickupAddress, deliveryAddress, packageDescription, vehicleType, paymentMethod]
+      properties:
+        customerId:
+          type: string
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        packageDescription:
+          type: string
+        vehicleType:
+          type: string
+        paymentMethod:
+          type: string
+
+    OrderStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    OrderRecord:
+      type: object
+      required: [id, customerId, pickupAddress, deliveryAddress, packageDescription, vehicleType, paymentMethod, status, createdAt]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: string
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        packageDescription:
+          type: string
+        vehicleType:
+          type: string
+        paymentMethod:
+          type: string
+        status:
+          type: string
+        selectedDriverId:
+          type: ["integer", "null"]
+        finalPrice:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    OfferInput:
+      type: object
+      required: [driverId, driverName, price, estimatedMinutes]
+      properties:
+        driverId:
+          type: integer
+        driverName:
+          type: string
+        price:
+          type: integer
+        estimatedMinutes:
+          type: integer
+
+    OfferRecord:
+      type: object
+      required: [id, orderId, driverId, driverName, price, estimatedMinutes, createdAt]
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        driverId:
+          type: integer
+        driverName:
+          type: string
+        price:
+          type: integer
+        estimatedMinutes:
+          type: integer
+        createdAt:
+          type: string
+
+    SelectOfferInput:
+      type: object
+      required: [offerId, driverId, price]
+      properties:
+        offerId:
+          type: integer
+        driverId:
+          type: integer
+        price:
+          type: integer
+
+    AgentInput:
+      type: object
+      required: [name, phone, address]
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        location:
+          type: ["string", "null"]
+
+    AgentRecord:
+      type: object
+      required: [id, name, phone, address, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        location:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        totalSales:
+          type: integer
+        createdAt:
+          type: string
+
+    AdminStats:
+      type: object
+      required: [totalOrders, ordersByStatus, totalDrivers, activeDrivers, pendingDrivers, uniqueCustomers, totalAgents, totalRevenue, totalCommissions, dailyStats]
+      properties:
+        totalOrders:
+          type: integer
+        ordersByStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        totalDrivers:
+          type: integer
+        activeDrivers:
+          type: integer
+        pendingDrivers:
+          type: integer
+        uniqueCustomers:
+          type: integer
+        totalAgents:
+          type: integer
+        totalRevenue:
+          type: integer
+        totalCommissions:
+          type: integer
+        topDrivers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DriverStat"
+        dailyStats:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyStat"
+
+    DriverStat:
+      type: object
+      required: [id, fullName, totalDeliveries, commissionBalance, vehicleType]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        totalDeliveries:
+          type: integer
+        commissionBalance:
+          type: integer
+        vehicleType:
+          type: string
+
+    DailyStat:
+      type: object
+      required: [date, orders, revenue]
+      properties:
+        date:
+          type: string
+        orders:
+          type: integer
+        revenue:
+          type: integer
+
+    AreaStat:
+      type: object
+      required: [area, totalDeliveries, byVehicle]
+      properties:
+        area:
+          type: string
+        totalDeliveries:
+          type: integer
+        byVehicle:
+          type: object
+          properties:
+            car:
+              type: integer
+            bike:
+              type: integer
+            truck:
+              type: integer

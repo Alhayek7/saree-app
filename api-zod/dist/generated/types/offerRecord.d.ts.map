@@ -1,0 +1,1 @@
+{"version":3,"file":"offerRecord.d.ts","sourceRoot":"","sources":["../../../src/generated/types/offerRecord.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,WAAW;IAC1B,EAAE,EAAE,MAAM,CAAC;IACX,OAAO,EAAE,MAAM,CAAC;IAChB,QAAQ,EAAE,MAAM,CAAC;IACjB,UAAU,EAAE,MAAM,CAAC;IACnB,KAAK,EAAE,MAAM,CAAC;IACd,gBAAgB,EAAE,MAAM,CAAC;IACzB,SAAS,EAAE,MAAM,CAAC;CACnB"}
